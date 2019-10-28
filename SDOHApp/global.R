@@ -15,3 +15,9 @@ detail_choice <- c("State", "County")
 
 USA_county <- getData("GADM", country="usa", level=2)
 USA_state <- getData("GADM", country="usa", level=1)
+
+sdoh_df_metric_state <- na.omit(states_df[, c("state", "unemployment")])
+sdoh_df_metric_state$state <- abbr2state(as.character(sdoh_df_metric_state$state))
+sdoh_df_metric_state <- na.omit(sdoh_df_metric_state)
+temp <- merge(USA_state, sdoh_df_metric_state, by.x="NAME_1", by.y="state", all.x=TRUE)
+mypal <- colorNumeric(palette="viridis", domain=temp[["unemployment"]], na.color="grey")

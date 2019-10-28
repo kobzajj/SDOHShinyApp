@@ -35,44 +35,51 @@ shinyServer(function(input, output, session) {
     
     observeEvent(input$metric_selected, {
 
-        metric_selected_new <- as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])
-
-        proxy <- leafletProxy("map")
-
-        if (input$detail_selected == "State") {
-            sdoh_df_metric_state <- na.omit(states_df[, c("state", metric_selected_new)] %>%
-                                                mutate(., state=abbr2state(as.character(state))))
-            temp <- merge(USA_state, sdoh_df_metric_state, by.x="NAME_1", by.y="state", all.x=TRUE)
-            mypal <- colorNumeric(palette="viridis", domain=temp[[metric_selected_new]], na.color="grey")
-
-            proxy %>%
-                addPolygons(data=USA_state, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
-                            fillColor= ~mypal(temp[[metric_selected_new]]),
-                            popup = paste("State: ", temp$NAME_1, "<br>", "County: ", "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
-                addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
-        } else {
-            sdoh_df_metric_county <- na.omit(counties_df[, c("state", "county", metric_selected_new)] %>%
-                                                 mutate(., state=abbr2state(state)))
-            temp <- merge(USA_county, sdoh_df_metric_county,
-                          by.x=c("NAME_1", "NAME_2"), by.y=c("state", "county"), all.x=TRUE)
-            mypal <- colorNumeric(palette="viridis", domain=temp[[metric_selected_new]], na.color="grey")
-
-            proxy %>%
-                addPolygons(data=USA_county, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
-                            fillColor= ~mypal(temp[[metric_selected_new]]),
-                            popup = paste("State: ", temp$NAME_1, "<br>", "County: ", temp$NAME_2, "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
-                addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
+        if (input$metric_selected != "") {
+            metric_selected_new <- as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])
+            
+            proxy <- leafletProxy("map")
+            
+            if (input$detail_selected == "State") {
+                sdoh_df_metric_state <- na.omit(states_df[, c("state", metric_selected_new)])
+                sdoh_df_metric_state$state <- abbr2state(as.character(sdoh_df_metric_state$state))
+                sdoh_df_metric_state <- na.omit(sdoh_df_metric_state)
+                temp <- merge(USA_state, sdoh_df_metric_state, by.x="NAME_1", by.y="state", all.x=TRUE)
+                mypal <- colorNumeric(palette="viridis", domain=temp[[metric_selected_new]], na.color="grey")
+                
+                proxy %>% clearShapes() %>% clearControls()
+                proxy %>%
+                    addPolygons(data=USA_state, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
+                                fillColor= ~mypal(temp[[metric_selected_new]]),
+                                popup = paste("State: ", temp$NAME_1, "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
+                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
+            } else {
+                sdoh_df_metric_county <- na.omit(counties_df[, c("state", "county", metric_selected_new)])
+                sdoh_df_metric_county$state <- abbr2state(as.character(sdoh_df_metric_county$state))
+                sdoh_df_metric_county <- na.omit(sdoh_df_metric_county)
+                temp <- merge(USA_county, sdoh_df_metric_county,
+                              by.x=c("NAME_1", "NAME_2"), by.y=c("state", "county"), all.x=TRUE)
+                mypal <- colorNumeric(palette="viridis", domain=temp[[metric_selected_new]], na.color="grey")
+                
+                proxy %>% clearShapes() %>% clearControls()
+                proxy %>%
+                    addPolygons(data=USA_county, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
+                                fillColor= ~mypal(temp[[metric_selected_new]]),
+                                popup = paste("State: ", temp$NAME_1, "<br>", "County: ", temp$NAME_2, "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
+                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
+            }
         }
     })
-    
-    # metric_selected_update <- reactive({
-    #     as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])
-    # })
 
     output$map <- renderLeaflet({
         # metric_selected_new <- metric_selected_update()
         leaflet() %>%
-                addProviderTiles("OpenStreetMap.Mapnik")
+            addProviderTiles("OpenStreetMap.Mapnik") %>%
+            setView(lng = -98.5795, lat = 39.8283, zoom = 4) %>%
+            addPolygons(data=USA_state, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
+                        fillColor= ~mypal(temp[["unemployment"]]),
+                        popup = paste("State: ", temp$NAME_1, "<br>", "Unemployment: ", temp[["unemployment"]], "<br>")) %>%
+            addLegend(position="bottomleft", pal=mypal, values=temp[["unemployment"]], title="Unemployment", opacity=1)
     })
 
 })
