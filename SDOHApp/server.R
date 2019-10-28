@@ -124,15 +124,29 @@ shinyServer(function(input, output, session) {
                                 as.character(metrics_df[metrics_df$metric.name == input$metric_y, "metric.id"]))])
     })
     
-    # scatter_options <- reactive({
-    #     list(width="600px", height="300px",
-    #          hAxis=input$metric_x,
-    #          vAxis=input$metric_y,
-    #          pointSize=1)
-    # })
+    hist_data <- reactive({
+        states_df[,as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"]), drop=FALSE]
+    })
+    
+    output$maxBox <- renderInfoBox({
+        max_value <- max(hist_data())
+        max_state <- abbr2state(states_df$state[states_df[, as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])] == max_value])
+        infoBox(max_state, round(max_value, 3), icon = icon("hand-o-up"))
+    })
+    
+    output$minBox <- renderInfoBox({
+        min_value <- min(hist_data())
+        min_state <- abbr2state(states_df$state[states_df[, as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])] == min_value])
+        infoBox(min_state, round(min_value, 3), icon = icon("hand-o-down"))
+    })
+    
+    output$avgBox <- renderInfoBox({
+        infoBox(paste("Average ", input$metric_selected),
+                round(metrics_df$natl.avg[metrics_df$metric.name == input$metric_selected], 3), 
+                icon = icon("calculator"), fill=TRUE)
+    })
 
     output$map <- renderLeaflet({
-        # metric_selected_new <- metric_selected_update()
         leaflet() %>%
             addProviderTiles("OpenStreetMap.Mapnik") %>%
             setView(lng = -98.5795, lat = 39.8283, zoom = 4) %>%
@@ -142,6 +156,13 @@ shinyServer(function(input, output, session) {
             addLegend(position="bottomleft", pal=mypal, values=temp[["unemployment"]], title="Unemployment", opacity=1)
     })
     
+    output$hist <- renderGvis(gvisHistogram(hist_data(),
+                                            options=list(
+                                                hAxis=paste("{title:'", input$metric_selected, "'}"),
+                                                vAxis="{title:'Count'}",
+                                                legend="{position: 'none'}"
+                                            )))
+    
     output$scatter <- renderGvis(
         gvisScatterChart(scatter_data(),
                          options=list(
@@ -149,12 +170,22 @@ shinyServer(function(input, output, session) {
                              pointSize=1,
                              hAxis=paste("{title:'", input$metric_x, "'}"),
                              vAxis=paste("{title:'", input$metric_y, "'}"),
-                             trendlines="0"
+                             trendlines="0",
+                             legend="{position: 'none'}"
                          ))
     )
+
+    table_df <- eventReactive(input$table_detail, {
+        
+        if (input$table_detail == "State") {
+            states_df
+        } else {
+            counties_df
+        }
+    })
     
     output$table <- DT::renderDataTable({
-        datatable(counties_df, rownames=FALSE)
+        datatable(table_df(), rownames=FALSE)
     })
 
 })

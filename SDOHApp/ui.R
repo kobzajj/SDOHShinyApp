@@ -37,7 +37,11 @@ shinyUI(dashboardPage(
                                                 "State vs. County Level",
                                                 choices=detail_choice_map,
                                                 selected=detail_choice_map[1]))),
-                    fluidRow(box(leafletOutput("map"), width=600))),
+                    fluidRow(infoBoxOutput("maxBox"),
+                             infoBoxOutput("minBox"),
+                             infoBoxOutput("avgBox")),
+                    fluidRow(box(leafletOutput("map"), width=600)),
+                    fluidRow(box(htmlOutput("hist"), width=600))),
             tabItem(tabName="dash", "to be replaced"),
             tabItem(tabName="metrics",
                     fluidRow(box(h4("First Variable (x axis)")),
@@ -68,6 +72,10 @@ shinyUI(dashboardPage(
                                                 selected=metric_choice_y[16]))),
                     fluidRow(box(htmlOutput("scatter"), width=600))),
             tabItem(tabName="data",
+                    fluidRow(box(selectizeInput("table_detail",
+                                                "State vs. County Level Table",
+                                                choices = detail_choice_table,
+                                                selected = detail_choice_table[1]))),
                     fluidRow(box(DT::dataTableOutput("table")))))
     )
 ))
