@@ -51,8 +51,8 @@ shinyServer(function(input, output, session) {
                 proxy %>%
                     addPolygons(data=USA_state, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
                                 fillColor= ~mypal(temp[[metric_selected_new]]),
-                                popup = paste("State: ", temp$NAME_1, "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
-                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
+                                popup = paste("State: ", temp$NAME_1, "<br>", input$metric_selected, ": ", round(temp[[metric_selected_new]], 3), "<br>")) %>%
+                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title=input$metric_selected, opacity=1)
             } else {
                 sdoh_df_metric_county <- na.omit(counties_df[, c("state", "county", metric_selected_new)])
                 sdoh_df_metric_county$state <- abbr2state(as.character(sdoh_df_metric_county$state))
@@ -65,8 +65,8 @@ shinyServer(function(input, output, session) {
                 proxy %>%
                     addPolygons(data=USA_county, stroke=FALSE, smoothFactor=0.2, fillOpacity=0.4,
                                 fillColor= ~mypal(temp[[metric_selected_new]]),
-                                popup = paste("State: ", temp$NAME_1, "<br>", "County: ", temp$NAME_2, "<br>", "Unemployment: ", temp[[metric_selected_new]], "<br>")) %>%
-                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title="Unemployment", opacity=1)
+                                popup = paste("State: ", temp$NAME_1, "<br>", "County: ", temp$NAME_2, "<br>", input$metric_selected, ": ", round(temp[[metric_selected_new]], 3), "<br>")) %>%
+                    addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title=input$metric_selected, opacity=1)
             }
         }
     })
@@ -81,5 +81,10 @@ shinyServer(function(input, output, session) {
                         popup = paste("State: ", temp$NAME_1, "<br>", "Unemployment: ", temp[["unemployment"]], "<br>")) %>%
             addLegend(position="bottomleft", pal=mypal, values=temp[["unemployment"]], title="Unemployment", opacity=1)
     })
+    
+    output$scatter <- renderGvis(
+        gvisScatterChart(na.omit(counties_df[, c(as.character(metrics_df[metrics_df$metric.name == input$metric_x, "metric.id"]), 
+                                         as.character(metrics_df[metrics_df$metric.name == input$metric_y, "metric.id"]))]))
+    )
 
 })

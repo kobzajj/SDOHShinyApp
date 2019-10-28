@@ -40,8 +40,8 @@ shinyUI(dashboardPage(
                     fluidRow(box(leafletOutput("map"), width=600))),
             tabItem(tabName="dash", "to be replaced"),
             tabItem(tabName="metrics",
-                    fluidRow(box(h2("First Variable (x axis)")),
-                             box(h2("Second variable (y axis)"))),
+                    fluidRow(box(h4("First Variable (x axis)")),
+                             box(h4("Second variable (y axis)"))),
                     fluidRow(box(selectizeInput("cat_x",
                                                 "Select Category",
                                                 choices=cat_choice,
@@ -49,7 +49,7 @@ shinyUI(dashboardPage(
                              box(selectizeInput("cat_y",
                                                 "Select Category",
                                                 choices=cat_choice,
-                                                selected=cat_choice[2])))
+                                                selected=cat_choice[2]))),
                     fluidRow(box(selectizeInput("subcat_x",
                                                 "Select Sub-Category",
                                                 choices=subcat_choice,
@@ -65,7 +65,8 @@ shinyUI(dashboardPage(
                              box(selectizeInput("metric_y",
                                                 "Select Metric",
                                                 choices=metric_choice,
-                                                selected=metric_choice[16])))),
+                                                selected=metric_choice[16]))),
+                    fluidRow(box(htmlOutput("scatter"), width=600))),
             tabItem(tabName="data",
                     fluidRow(box(DT::dataTableOutput("table")))))
     )

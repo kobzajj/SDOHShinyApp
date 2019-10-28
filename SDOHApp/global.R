@@ -3,6 +3,7 @@ library(leaflet)
 library(shinydashboard)
 library(DT)
 library(raster)
+library(googleVis)
 
 counties_df <- read.csv('../data/sdoh_counties.csv')
 states_df <- read.csv('../data/sdoh_states.csv')
