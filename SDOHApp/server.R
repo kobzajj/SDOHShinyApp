@@ -10,26 +10,74 @@
 shinyServer(function(input, output, session) {
     
     observeEvent(input$cat_selected, {
-        subcat_choice <- unique(metrics_df[metrics_df$category == input$cat_selected, 'subcategory'])
+        subcat_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected, 'subcategory'])
         updateSelectizeInput(
             session, "subcat_selected",
-            choices = subcat_choice,
-            selected = subcat_choice[1]
+            choices = subcat_choice_map,
+            selected = subcat_choice_map[1]
         )
-        metric_choice <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
+        metric_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
         updateSelectizeInput(
             session, "metric_selected",
-            choices = metric_choice,
-            selected = metric_choice[1]
+            choices = metric_choice_map,
+            selected = metric_choice_map[1]
         )
     })
     
     observeEvent(input$subcat_selected, {
-        metric_choice <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
+        metric_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
         updateSelectizeInput(
             session, "metric_selected",
-            choices = metric_choice,
-            selected = metric_choice[1]
+            choices = metric_choice_map,
+            selected = metric_choice_map[1]
+        )
+    })
+    
+    observeEvent(input$cat_x, {
+        subcat_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x, 'subcategory'])
+        updateSelectizeInput(
+            session, "subcat_x",
+            choices = subcat_choice_x,
+            selected = subcat_choice_x[1]
+        )
+        metric_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x & metrics_df$subcategory == input$subcat_x, 'metric.name'])
+        updateSelectizeInput(
+            session, "metric_x",
+            choices = metric_choice_x,
+            selected = metric_choice_x[1]
+        )
+    })
+    
+    observeEvent(input$subcat_x, {
+        metric_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x & metrics_df$subcategory == input$subcat_x, 'metric.name'])
+        updateSelectizeInput(
+            session, "metric_x",
+            choices = metric_choice_x,
+            selected = metric_choice_x[1]
+        )
+    })
+    
+    observeEvent(input$cat_y, {
+        subcat_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y, 'subcategory'])
+        updateSelectizeInput(
+            session, "subcat_y",
+            choices = subcat_choice_y,
+            selected = subcat_choice_y[1]
+        )
+        metric_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y & metrics_df$subcategory == input$subcat_y, 'metric.name'])
+        updateSelectizeInput(
+            session, "metric_y",
+            choices = metric_choice_y,
+            selected = metric_choice_y[1]
+        )
+    })
+    
+    observeEvent(input$subcat_y, {
+        metric_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y & metrics_df$subcategory == input$subcat_y, 'metric.name'])
+        updateSelectizeInput(
+            session, "metric_y",
+            choices = metric_choice_y,
+            selected = metric_choice_y[1]
         )
     })
     
@@ -70,6 +118,18 @@ shinyServer(function(input, output, session) {
             }
         }
     })
+    
+    scatter_data <- reactive({
+        na.omit(counties_df[, c(as.character(metrics_df[metrics_df$metric.name == input$metric_x, "metric.id"]), 
+                                as.character(metrics_df[metrics_df$metric.name == input$metric_y, "metric.id"]))])
+    })
+    
+    # scatter_options <- reactive({
+    #     list(width="600px", height="300px",
+    #          hAxis=input$metric_x,
+    #          vAxis=input$metric_y,
+    #          pointSize=1)
+    # })
 
     output$map <- renderLeaflet({
         # metric_selected_new <- metric_selected_update()
@@ -83,8 +143,18 @@ shinyServer(function(input, output, session) {
     })
     
     output$scatter <- renderGvis(
-        gvisScatterChart(na.omit(counties_df[, c(as.character(metrics_df[metrics_df$metric.name == input$metric_x, "metric.id"]), 
-                                         as.character(metrics_df[metrics_df$metric.name == input$metric_y, "metric.id"]))]))
+        gvisScatterChart(scatter_data(),
+                         options=list(
+                             width="1000px", height="400px",
+                             pointSize=1,
+                             hAxis=paste("{title:'", input$metric_x, "'}"),
+                             vAxis=paste("{title:'", input$metric_y, "'}"),
+                             trendlines="0"
+                         ))
     )
+    
+    output$table <- DT::renderDataTable({
+        datatable(counties_df, rownames=FALSE)
+    })
 
 })
