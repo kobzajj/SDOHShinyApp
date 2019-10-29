@@ -1,0 +1,12 @@
+name: SDOHApp
+title: SDOHApp
+username:
+account: kobzajj
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1389553
+bundleId: 2544525
+url: https://kobzajj.shinyapps.io/SDOHApp/
+when: 1572279343.29423
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,99 @@
+---
+title: "SDOHAppPreprocessing"
+author: "Jake Kobza"
+date: "10/24/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read and Select Data
+
+This data comes from the County Health Rankings project from the Robert Wood Johnson Foundation (RWJF). The full data set and documentation can be found here: https://www.countyhealthrankings.org/
+
+Preprocessing of this data set will include the following:
+
+
+```{r}
+
+library(dplyr)
+sdoh_df = read.csv('../data/analytic_data2019.csv', skip=1)
+sdoh_df = sdoh_df %>% select(., fipscode, state, county, v051_rawvalue, v023_rawvalue, v044_rawvalue, v136_rawvalue, v043_rawvalue, v136_other_data_2,  v116_rawvalue, v021_rawvalue, v069_rawvalue, v133_rawvalue, v139_rawvalue, v083_rawvalue, v140_rawvalue, v059_rawvalue, v004_rawvalue, v062_rawvalue, v155_rawvalue, v036_rawvalue, v042_rawvalue, v011_rawvalue, v005_rawvalue, v147_rawvalue, v060_rawvalue, v061_rawvalue, v099_rawvalue, v100_rawvalue, v150_rawvalue)
+colnames(sdoh_df) <- c("fipscode", "state", "county", "population", "unemployment", "income.ineq", "housing.severe", "violent.crime", "overcrowding", "reading.prof", "high.school.grad", "college", "food.env.index", "food.insecurity", "healthy.foods", "social.assoc", "english.notprof", "pcp", "mhp", "flu.vaccine", "poor.physical.health", "poor.mental.health", "obesity", "prevent.hosp.stays", "life.expectancy", "diabetes", "hiv", "cancer", "chd", "opioid.hosp")
+sdoh_df$county <- gsub(" County", "", sdoh_df$county)
+sdoh_df <- sdoh_df %>% distinct(., state, county, .keep_all=TRUE)
+str(sdoh_df)
+
+```
+
+## Missing Data
+
+You can also embed plots, for example:
+
+```{r}
+
+missing_ratio = colSums(is.na(sdoh_df)) / nrow(sdoh_df)
+missing_ratio
+drop_cols = c("reading.prof", "cancer", "chd", "opioid.hosp")
+sdoh_df = sdoh_df[ , !(names(sdoh_df) %in% drop_cols)]
+colnames(sdoh_df)
+
+```
+
+## Unit Adjustment
+
+You can also embed plots, for example:
+
+```{r}
+
+sdoh_df$violent.crime <- sdoh_df$violent.crime / 10
+sdoh_df$pcp <- sdoh_df$pcp * 10000
+sdoh_df$mhp <- sdoh_df$mhp * 10000
+sdoh_df$hiv <- sdoh_df$hiv / 10
+sdoh_df$prevent.hosp.stays <- sdoh_df$prevent.hosp.stays / 10000
+
+```
+
+## Metric Table Creation
+
+You can also embed plots, for example:
+
+```{r}
+
+metrics_df = data.frame(category=character(), subcategory=character(), metric.id=character(), metric.name=character(), higher.better=logical(), natl.avg=numeric())
+for (i in 1:22) { metrics_df = add_row(metrics_df) }
+metrics_df$category <- c(rep("Social Determinants", 15), rep("Health Outcomes", 7))
+metrics_df$subcategory <- c(rep("Economic Stability", 2), rep("Neighborhood / Environment", 3), rep("Education", 2), rep("Food", 3), rep("Community / Social", 2), rep("Healthcare System", 3), rep("General Health", 5), rep("Disease Specific", 2))
+metrics_df$metric.id <- c("unemployment", "income.ineq", "housing.severe", "violent.crime", "overcrowding", "high.school.grad", "college", "food.env.index", "food.insecurity", "healthy.foods", "social.assoc", "english.notprof", "pcp", "mhp", "flu.vaccine", "poor.physical.health", "poor.mental.health", "obesity", "prevent.hosp.stays", "life.expectancy", "diabetes", "hiv")
+metrics_df$metric.name <- c("Unemployment", "Income Inequality", "Severe Housing Problems (%)", "Violent Crimes per 10,000 People", "Overcrowding", "High School Graduation Rate", "College Rate", "Food Environment Index", "Food Insecurity", "Limited Access to Healthy Foods (%)", "Social Associations per 10,000 People", "% of People Not Proficient in English", "Primary Care Providers per 10,000 People", "Mental Health Providers per 10,000 People", "Flu Vaccines (%)", "Poor Physical Health Days per Month", "Poor Mental Health Days per Month", "Obesity Rate (%)", "Preventable Hospital Stays per 10,000 People", "Life Expectancy", "Diabetes Prevalence (%)", "HIV Prevalence (per 10,000)")
+metrics_df$higher.better <- c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE)
+for (i in 1:22) {
+  metric_specific_df = sdoh_df[!is.na(sdoh_df[, metrics_df[i, 'metric.id']]), ]
+  metrics_df[i, 'natl.avg'] <- sum(metric_specific_df[, metrics_df[i, 'metric.id']] * metric_specific_df[ , 'population']) / sum(metric_specific_df[ , 'population'])
+}
+
+```
+
+## State-Level Table Creation
+
+You can also embed plots, for example:
+
+```{r}
+
+states_df = sdoh_df %>% group_by(., state) %>% summarise_at(c("unemployment", "income.ineq", "housing.severe", "violent.crime", "overcrowding", "high.school.grad", "college", "food.env.index", "food.insecurity", "healthy.foods", "social.assoc", "english.notprof", "pcp", "mhp", "flu.vaccine", "poor.physical.health", "poor.mental.health", "obesity", "prevent.hosp.stays", "life.expectancy", "diabetes", "hiv"), list(~ weighted.mean(., w=population, na.rm=TRUE)))
+
+```
+
+## Write to CSV Files
+
+You can also embed plots, for example:
+
+```{r}
+
+write.csv(sdoh_df, file='../SDOHApp/data/sdoh_counties.csv')
+write.csv(metrics_df, '../SDOHApp/data/metric_table.csv')
+write.csv(states_df, '../SDOHApp/data/sdoh_states.csv')
+
+```
