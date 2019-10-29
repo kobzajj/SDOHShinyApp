@@ -9,14 +9,18 @@
 
 shinyServer(function(input, output, session) {
     
+    dbname = "./sdoh.sqlite"
+    source("helpers.R")
+    conn <- dbConnector(session, dbname = dbname)
+    
     observeEvent(input$cat_selected, {
-        subcat_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected, 'subcategory'])
+        subcat_choice_map <- unique(dbGetDataMetrics(conn, "subcategory", input$cat_selected, "all", "all", "all")$subcategory)
         updateSelectizeInput(
             session, "subcat_selected",
             choices = subcat_choice_map,
             selected = subcat_choice_map[1]
         )
-        metric_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
+        metric_choice_map <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_selected, input$subcat_selected, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_selected",
             choices = metric_choice_map,
@@ -25,7 +29,7 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$subcat_selected, {
-        metric_choice_map <- unique(metrics_df[metrics_df$category == input$cat_selected & metrics_df$subcategory == input$subcat_selected, 'metric.name'])
+        metric_choice_map <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_selected, input$subcat_selected, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_selected",
             choices = metric_choice_map,
@@ -34,13 +38,13 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$cat_x, {
-        subcat_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x, 'subcategory'])
+        subcat_choice_x <- unique(dbGetDataMetrics(conn, "subcategory", input$cat_x, "all", "all", "all")$subcategory)
         updateSelectizeInput(
             session, "subcat_x",
             choices = subcat_choice_x,
             selected = subcat_choice_x[1]
         )
-        metric_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x & metrics_df$subcategory == input$subcat_x, 'metric.name'])
+        metric_choice_x <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_x, input$subcat_x, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_x",
             choices = metric_choice_x,
@@ -49,7 +53,7 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$subcat_x, {
-        metric_choice_x <- unique(metrics_df[metrics_df$category == input$cat_x & metrics_df$subcategory == input$subcat_x, 'metric.name'])
+        metric_choice_x <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_x, input$subcat_x, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_x",
             choices = metric_choice_x,
@@ -58,13 +62,13 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$cat_y, {
-        subcat_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y, 'subcategory'])
+        subcat_choice_y <- unique(dbGetDataMetrics(conn, "subcategory", input$cat_y, "all", "all", "all")$subcategory)
         updateSelectizeInput(
             session, "subcat_y",
             choices = subcat_choice_y,
             selected = subcat_choice_y[1]
         )
-        metric_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y & metrics_df$subcategory == input$subcat_y, 'metric.name'])
+        metric_choice_y <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_y, input$subcat_y, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_y",
             choices = metric_choice_y,
@@ -73,7 +77,7 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$subcat_y, {
-        metric_choice_y <- unique(metrics_df[metrics_df$category == input$cat_y & metrics_df$subcategory == input$subcat_y, 'metric.name'])
+        metric_choice_y <- unique(dbGetDataMetrics(conn, "[metric.name]", input$cat_y, input$subcat_y, "all", "all")$metric.name)
         updateSelectizeInput(
             session, "metric_y",
             choices = metric_choice_y,
@@ -84,12 +88,12 @@ shinyServer(function(input, output, session) {
     observeEvent(input$metric_selected, {
 
         if (input$metric_selected != "") {
-            metric_selected_new <- as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])
+            metric_selected_new <- as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected))
             
             proxy <- leafletProxy("map")
             
             if (input$detail_selected == "State") {
-                sdoh_df_metric_state <- na.omit(states_df[, c("state", metric_selected_new)])
+                sdoh_df_metric_state <- na.omit(dbGetDataStates(conn, paste0("state, [", metric_selected_new, "]")))
                 sdoh_df_metric_state$state <- abbr2state(as.character(sdoh_df_metric_state$state))
                 sdoh_df_metric_state <- na.omit(sdoh_df_metric_state)
                 temp <- merge(USA_state, sdoh_df_metric_state, by.x="NAME_1", by.y="state", all.x=TRUE)
@@ -102,7 +106,7 @@ shinyServer(function(input, output, session) {
                                 popup = paste("State: ", temp$NAME_1, "<br>", input$metric_selected, ": ", round(temp[[metric_selected_new]], 3), "<br>")) %>%
                     addLegend(position="bottomleft", pal=mypal, values=temp[[metric_selected_new]], title=input$metric_selected, opacity=1)
             } else {
-                sdoh_df_metric_county <- na.omit(counties_df[, c("state", "county", metric_selected_new)])
+                sdoh_df_metric_county <- na.omit(dbGetDataCounties(conn, paste0("state, county, [", metric_selected_new, "]")))
                 sdoh_df_metric_county$state <- abbr2state(as.character(sdoh_df_metric_county$state))
                 sdoh_df_metric_county <- na.omit(sdoh_df_metric_county)
                 temp <- merge(USA_county, sdoh_df_metric_county,
@@ -120,29 +124,32 @@ shinyServer(function(input, output, session) {
     })
     
     scatter_data <- reactive({
-        na.omit(counties_df[, c(as.character(metrics_df[metrics_df$metric.name == input$metric_x, "metric.id"]), 
-                                as.character(metrics_df[metrics_df$metric.name == input$metric_y, "metric.id"]))])
+        na.omit(dbGetDataCounties(conn, paste0("[", 
+                                               as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_x)), 
+                                               "], [", 
+                                               as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_y)),
+                                               "]")))
     })
     
     hist_data <- reactive({
-        states_df[,as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"]), drop=FALSE]
+        dbGetDataStates(conn, paste0("[", as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected)), "]"))
     })
     
     output$maxBox <- renderInfoBox({
         max_value <- max(hist_data())
-        max_state <- abbr2state(states_df$state[states_df[, as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])] == max_value])
+        max_state <- abbr2state(dbGetDataStates(conn, "state", as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected)), max_value))
         infoBox(max_state, round(max_value, 3), icon = icon("hand-o-up"))
     })
     
     output$minBox <- renderInfoBox({
         min_value <- min(hist_data())
-        min_state <- abbr2state(states_df$state[states_df[, as.character(metrics_df[metrics_df$metric.name == input$metric_selected, "metric.id"])] == min_value])
+        min_state <- abbr2state(dbGetDataStates(conn, "state", as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected)), min_value))
         infoBox(min_state, round(min_value, 3), icon = icon("hand-o-down"))
     })
     
     output$avgBox <- renderInfoBox({
         infoBox(paste("Average ", input$metric_selected),
-                round(metrics_df$natl.avg[metrics_df$metric.name == input$metric_selected], 3), 
+                round(as.numeric(dbGetDataMetrics(conn, "[natl.avg]", "all", "all", "all", input$metric_selected)), 3), 
                 icon = icon("calculator"), fill=TRUE)
     })
 
@@ -178,9 +185,10 @@ shinyServer(function(input, output, session) {
     table_df <- eventReactive(input$table_detail, {
         
         if (input$table_detail == "State") {
+            dbGetDataStates(conn, "*")
             states_df
         } else {
-            counties_df
+            dbGetDataCounties(conn, "*")
         }
     })
     

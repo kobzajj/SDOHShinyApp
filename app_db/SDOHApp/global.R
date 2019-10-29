@@ -6,10 +6,6 @@ library(raster)
 library(googleVis)
 library(openintro)
 
-counties_df <- read.csv('data/sdoh_counties.csv')
-states_df <- read.csv('data/sdoh_states.csv')
-metrics_df <- read.csv('data/metric_table.csv')
-
 cat_choice_map <- unique(metrics_df$category)
 subcat_choice_map <- unique(metrics_df$subcategory)
 metric_choice_map <- unique(metrics_df$metric.name)
