@@ -14,9 +14,9 @@ shinyUI(dashboardPage(
         sidebarUserPanel("Jake Kobza", image='https://media.licdn.com/dms/image/C5603AQEhOVLnVqrhLg/profile-displayphoto-shrink_200_200/0?e=1577923200&v=beta&t=XFXo63G1NBp9MvEHV8FJfyGQ_zG2ROmk-eEAA6Rtyek'),
         sidebarMenu(
             menuItem("Map", tabName="map", icon = icon("map")),
-            menuItem("Summary Dashboard", tabName="dash", icon=icon("address-card")),
             menuItem("Metric Comparison", tabName="metrics", icon=icon("chart-line")),
-            menuItem("Data", tabName="data", icon=icon("database")))
+            menuItem("Data", tabName="data", icon=icon("database")),
+            menuItem("Summary Dashboard", tabName="dash", icon=icon("address-card")))
     ),
     dashboardBody(
         tabItems(
@@ -42,7 +42,6 @@ shinyUI(dashboardPage(
                              infoBoxOutput("avgBox")),
                     fluidRow(box(leafletOutput("map"), width=600)),
                     fluidRow(box(htmlOutput("hist"), width=600))),
-            tabItem(tabName="dash", "to be replaced"),
             tabItem(tabName="metrics",
                     fluidRow(box(h4("First Variable (x axis)")),
                              box(h4("Second variable (y axis)"))),
@@ -76,6 +75,7 @@ shinyUI(dashboardPage(
                                                 "State vs. County Level Table",
                                                 choices = detail_choice_table,
                                                 selected = detail_choice_table[1]))),
-                    fluidRow(box(DT::dataTableOutput("table")))))
+                    fluidRow(box(DT::dataTableOutput("table"), width=1000))),
+            tabItem(tabName="dash", "to be replaced"))
     )
 ))

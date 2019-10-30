@@ -13,6 +13,12 @@ shinyServer(function(input, output, session) {
     source("helpers.R")
     conn <- dbConnector(session, dbname = dbname)
     
+    sdoh_df_metric_state <- na.omit(dbGetDataStates(conn, "state, unemployment"))
+    sdoh_df_metric_state$state <- abbr2state(as.character(sdoh_df_metric_state$state))
+    sdoh_df_metric_state <- na.omit(sdoh_df_metric_state)
+    temp <- merge(USA_state, sdoh_df_metric_state, by.x="NAME_1", by.y="state", all.x=TRUE)
+    mypal <- colorNumeric(palette="viridis", domain=temp[["unemployment"]], na.color="grey")
+    
     observeEvent(input$cat_selected, {
         subcat_choice_map <- unique(dbGetDataMetrics(conn, "subcategory", input$cat_selected, "all", "all", "all")$subcategory)
         updateSelectizeInput(
@@ -136,13 +142,13 @@ shinyServer(function(input, output, session) {
     })
     
     output$maxBox <- renderInfoBox({
-        max_value <- max(hist_data())
+        max_value <- max(na.omit(hist_data()))
         max_state <- abbr2state(dbGetDataStates(conn, "state", as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected)), max_value))
         infoBox(max_state, round(max_value, 3), icon = icon("hand-o-up"))
     })
     
     output$minBox <- renderInfoBox({
-        min_value <- min(hist_data())
+        min_value <- min(na.omit(hist_data()))
         min_state <- abbr2state(dbGetDataStates(conn, "state", as.character(dbGetDataMetrics(conn, "[metric.id]", "all", "all", "all", input$metric_selected)), min_value))
         infoBox(min_state, round(min_value, 3), icon = icon("hand-o-down"))
     })
@@ -186,7 +192,6 @@ shinyServer(function(input, output, session) {
         
         if (input$table_detail == "State") {
             dbGetDataStates(conn, "*")
-            states_df
         } else {
             dbGetDataCounties(conn, "*")
         }

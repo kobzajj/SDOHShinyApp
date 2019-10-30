@@ -5,8 +5,8 @@ account: kobzajj
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1389553
-bundleId: 2544525
+bundleId: 2549067
 url: https://kobzajj.shinyapps.io/SDOHApp/
-when: 1572279343.29423
+when: 1572377372.22232
 asMultiple: FALSE
 asStatic: FALSE
